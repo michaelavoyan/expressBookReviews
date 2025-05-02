@@ -39,14 +39,21 @@ public_users.get('/',function (req, res) {
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', function (req, res) {
-  const isbn = req.params.isbn;
-
-  const book = books[isbn];
-  if (book) {
-    return res.status(200).json(book);
-  } else {
-    return res.status(404).json({ message: `Book not found for the given ISBN: ${isbn}.` });
-  }
+    const isbn = req.params.isbn;
+    new Promise((resolve, reject) => {
+        const book = books[isbn];
+        if (book) {
+            resolve(book);
+        } else {
+            reject(`Book not found for the given ISBN: ${isbn}.`);
+        }
+    })
+        .then((book) => {
+            return res.status(200).json(book);
+        })
+        .catch((error) => {
+            return res.status(404).json({ message: error });
+        });
 });
 
 // Get book details based on author
