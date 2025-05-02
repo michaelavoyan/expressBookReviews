@@ -65,6 +65,43 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   return res.status(200).json({ message: "Review added or updated successfully." });
 });
 
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const isbn = req.params.isbn;
+
+  // Extract username from the session token
+  const token = req.session.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(403).json({ message: "Unauthorized. No token found." });
+  }
+
+  let username;
+  try {
+    const decoded = jwt.verify(token, 'access');
+    username = decoded.username;
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid token." });
+  }
+
+  if (!isbn) {
+    return res.status(400).json({ message: "ISBN is required." });
+  }
+
+  if (!books[isbn]) {
+    return res.status(404).json({ message: `Book not found for the given ISBN: ${isbn}.` });
+  }
+
+  // Check if the user's review exists
+  if (!books[isbn].reviews[username]) {
+    return res.status(404).json({ message: "No review by this user to delete." });
+  }
+
+  // ✅ Properly delete the review
+  delete books[isbn].reviews[username];
+
+  return res.status(200).json({ message: "Review deleted successfully." });
+});
+
+
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
 module.exports.users = users;
